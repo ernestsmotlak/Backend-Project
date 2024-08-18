@@ -1,6 +1,5 @@
 # REST API for User Support
 
-How to run
 
  **Install dependencies**:
    ```bash
