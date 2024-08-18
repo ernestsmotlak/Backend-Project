@@ -43,3 +43,5 @@ For accessing the endpoints you need to provide username and password.
 Most of the testing was done by using Postman.
 
 I have also included the `kaldiFinal.postman_collection.json` that should upon being imported into Postman show the requests.
+
+I've made a branch `html` where i've created the html folder with 2 .html files, for testing.
