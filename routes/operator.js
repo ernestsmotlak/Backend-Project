@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-// Middleware for Basic Authentication with role check
 function basicAuth(db, role) {
   return (req, res, next) => {
     const authHeader = req.headers["authorization"];
@@ -18,7 +17,6 @@ function basicAuth(db, role) {
       .toString()
       .split(":");
 
-    // Check credentials against the database
     const checkUser =
       "SELECT id, role FROM Users WHERE username = ? AND password = ?";
 
@@ -31,10 +29,8 @@ function basicAuth(db, role) {
         return res.status(401).json({ error: "Invalid credentials!" });
       }
 
-      // Attach user data to the request object
       req.user = user;
 
-      // Role check
       if (role && req.user.role !== role) {
         return res.status(403).json({
           error: `Access denied! Only users with the role of '${role}' can access.`,
@@ -47,7 +43,6 @@ function basicAuth(db, role) {
 }
 
 module.exports = function (db) {
-  // Route to show all conversations
   router.get("/showAllRooms", basicAuth(db, "operator"), (req, res) => {
     const showOpenConversations = `
 SELECT 
@@ -104,53 +99,44 @@ SELECT
   );
 
   router.post("/takeRoom", basicAuth(db, "operator"), (req, res) => {
-    // Get roomId from the request body
     const { roomId } = req.body;
 
-    // SQL query to check the current status of the room
     const checkRoomStatus = `
         SELECT status
         FROM Rooms
         WHERE id = ?;
     `;
 
-    // Run the check query
     db.get(checkRoomStatus, [roomId], (err, row) => {
       if (err) {
         console.error("Error executing query: " + err.message);
         return res.status(500).json({ error: "Internal server error!" });
       }
 
-      // Check if the room exists
       if (!row) {
         return res.status(404).json({ error: "Room not found!" });
       }
 
-      // Check if the room is already taken
       if (row.status === "taken") {
         return res.status(400).json({ error: "Room is already taken!" });
       }
 
-      // SQL query to update the room status
       const closeRoom = `
             UPDATE Rooms
             SET status = 'taken'
             WHERE id = ?;
         `;
 
-      // Run the update query
       db.run(closeRoom, [roomId], function (err) {
         if (err) {
           console.error("Error executing query: " + err.message);
           return res.status(500).json({ error: "Internal server error!" });
         }
 
-        // Check if any rows were updated
         if (this.changes === 0) {
           return res.status(401).json({ error: "You cannot take this room!" });
         }
 
-        // If successful, return a success message
         res.json({ message: "Room successfully taken!", roomId });
       });
     });

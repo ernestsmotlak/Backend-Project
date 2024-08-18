@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-// Middleware for Basic Authentication with role check
 function basicAuth(db, role) {
   return (req, res, next) => {
     const authHeader = req.headers["authorization"];
@@ -18,7 +17,6 @@ function basicAuth(db, role) {
       .toString()
       .split(":");
 
-    // Check credentials against the database
     const checkUser =
       "SELECT id, role FROM Users WHERE username = ? AND password = ?";
 
@@ -31,10 +29,8 @@ function basicAuth(db, role) {
         return res.status(401).json({ error: "Invalid credentials!" });
       }
 
-      // Attach user data to the request object
       req.user = user;
 
-      // Role check
       if (role && req.user.role !== role) {
         return res.status(403).json({
           error: `Access denied. Only users with the role of '${role}' can access this endpoint.`,
@@ -47,7 +43,6 @@ function basicAuth(db, role) {
 }
 
 module.exports = function (db) {
-  // Route to create a conversation and insert an initial message
   router.post(
     "/createNewRoomAndSendMessage",
     basicAuth(db, "user"),
@@ -62,7 +57,6 @@ module.exports = function (db) {
         return res.status(400).json({ error: "Message cannot be empty!" });
       }
 
-      // Start the transaction
       db.serialize(() => {
         db.run("BEGIN TRANSACTION", (err) => {
           if (err) {
@@ -70,7 +64,6 @@ module.exports = function (db) {
             return res.status(500).json({ error: "Internal Server Error 1" });
           }
 
-          // Insert a new room with the provided name
           const insertRoom = db.prepare(`
             INSERT INTO Rooms (name, user_id, status)
             VALUES (?, ?, 'open')
@@ -84,9 +77,8 @@ module.exports = function (db) {
               });
             }
 
-            const roomId = this.lastID; // Get the newly inserted room ID
+            const roomId = this.lastID;
 
-            // Insert the initial message with provided content
             const insertMessage = db.prepare(`
               INSERT INTO Messages (room_id, sender_id, message)
               VALUES (?, ?, ?)
@@ -100,7 +92,6 @@ module.exports = function (db) {
                 });
               }
 
-              // Commit the transaction
               db.run("COMMIT", (err) => {
                 if (err) {
                   console.error("Error committing transaction: " + err.message);
@@ -163,7 +154,6 @@ module.exports = function (db) {
         return res.status(500).json({ error: "Internal server error!" });
       }
 
-      // res.json(rows);
       res.json("Message sent!");
     });
   });
