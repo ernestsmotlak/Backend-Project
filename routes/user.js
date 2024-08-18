@@ -125,6 +125,7 @@ module.exports = function (db) {
     }
   );
 
+  
   router.get("/showAllUsersRooms", basicAuth(db, "user"), (req, res) => {
     const sql = `
     SELECT Messages.conversation_id, Messages.message, Messages.created_at
