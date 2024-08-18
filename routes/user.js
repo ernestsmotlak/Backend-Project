@@ -49,7 +49,7 @@ function basicAuth(db, role) {
 module.exports = function (db) {
   // Route to create a conversation and insert an initial message
   router.post(
-    "/createRoomAndSendMessage",
+    "/createNewRoomAndSendMessage",
     basicAuth(db, "user"),
     (req, res) => {
       const { roomName, message } = req.body;
@@ -127,15 +127,20 @@ module.exports = function (db) {
 
   router.get("/showAllUsersRooms", basicAuth(db, "user"), (req, res) => {
     const sql = `
-    SELECT 
+   SELECT 
     Rooms.id AS room_id,
     Rooms.name AS room_name,
-    Messages.message AS message_content,
-    MessageSender.username AS sender_username
+    GROUP_CONCAT(
+       '' || MessageSender.username || ': ' || Messages.message || ' '
+    ) AS messages,
+    Rooms.status AS status
     FROM Rooms
     LEFT JOIN Messages ON Rooms.id = Messages.room_id
     LEFT JOIN Users AS MessageSender ON Messages.sender_id = MessageSender.id
-    WHERE Rooms.user_id = ?;`;
+    WHERE Rooms.user_id = ?
+    GROUP BY Rooms.id, Rooms.name, Rooms.status;
+;
+`;
 
     db.all(sql, [req.user.id], (err, rows) => {
       if (err) {
