@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Show All User's Rooms</title>
+  </head>
+  <body>
+    <h1>Show All User's Rooms</h1>
+
+    <form id="authForm">
+      <label for="username">Username:</label><br />
+      <input type="text" id="username" name="username" required /><br /><br />
+
+      <label for="password">Password:</label><br />
+      <input
+        type="password"
+        id="password"
+        name="password"
+        required
+      /><br /><br />
+
+      <button type="submit">Show Rooms</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+      document
+        .getElementById("authForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          // Encode the credentials in base64
+          const credentials = btoa(`${username}:${password}`);
+
+          // Send a GET request with the Authorization header
+          fetch("http://localhost:4001/users/showAllUsersRooms", {
+            method: "GET",
+            headers: {
+              Authorization: `Basic ${credentials}`,
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const resultDiv = document.getElementById("result");
+
+              if (data.error) {
+                resultDiv.textContent = "Error: " + data.error;
+                resultDiv.style.color = "red";
+              } else {
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                resultDiv.style.color = "green";
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              document.getElementById("result").textContent =
+                "Failed to fetch data.";
+            });
+        });
+    </script>
+  </body>
+</html>

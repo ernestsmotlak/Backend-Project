@@ -41,5 +41,4 @@ For accessing the endpoints you need to provide username and password.
 ## Testing
 
 Most of the testing was done by using Postman.
-
-I have also included the `kaldiFinal.postman_collection.json` that should upon being imported into Postman show the requests.
+I have also included the `_**kaldiFinal.postman_collection.json**_` that should upon being imported into Postman show the requests.
