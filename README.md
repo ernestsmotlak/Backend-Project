@@ -1,11 +1,34 @@
-Kaldi 
-============
+# REST API
 
 How to run
 
--   ``` npm install ```
--   ``` nodemon server.js ```
+- `npm install`
+- `nodemon server.js`
 
+## DATABASE
+
+The databse is SqLite, i used DB Browser for SqLite for editing the database.
+
+# Tables:
+
+- **Users**
+  - `id` (Primary Key)
+  - `username`
+  - `password`
+  - `role`
+
+- **Rooms**
+  - `id` (Primary Key)
+  - `name`
+  - `user_id` (Foreign Key - references `Users.id`)
+  - `status`
+
+- **Messages**
+  - `id` (Primary Key)
+  - `room_id` (Foreign Key - references `Rooms.id`)
+  - `sender_id` (Foreign Key - references `Users.id`)
+  - `message`
+  - `created_at`
 
 
 and images can be specified like so:
