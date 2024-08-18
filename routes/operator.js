@@ -95,34 +95,55 @@ GROUP BY Rooms.id, Rooms.name, Rooms.status;
   );
 
   router.post("/takeRoom", basicAuth(db, "operator"), (req, res) => {
-    // Get conversation_id from the request body
-    const { conversation_id } = req.body;
+    // Get roomId from the request body
+    const { roomId } = req.body;
 
-    // SQL query to update the conversation status
-    const closeRoom = `
-        UPDATE Conversations
-        SET status = 'taken'
-        WHERE id IN (
-        SELECT Conversations.id
-        FROM Conversations
-        JOIN Messages ON Messages.conversation_id = Conversations.id
-        WHERE Conversations.status = 'open' AND Messages.conversation_id = ?
-        )`;
+    // SQL query to check the current status of the room
+    const checkRoomStatus = `
+        SELECT status
+        FROM Rooms
+        WHERE id = ?;
+    `;
 
-    // Run the update query
-    db.run(closeRoom, [conversation_id], function (err) {
+    // Run the check query
+    db.get(checkRoomStatus, [roomId], (err, row) => {
       if (err) {
         console.error("Error executing query: " + err.message);
         return res.status(500).json({ error: "Internal server error!" });
       }
 
-      // Check if any rows were updated
-      if (this.changes === 0) {
-        return res.status(401).json({ error: "You cannot take this room!" });
+      // Check if the room exists
+      if (!row) {
+        return res.status(404).json({ error: "Room not found!" });
       }
 
-      // If successful, return a success message
-      res.json({ message: "Room successfully taken!", conversation_id });
+      // Check if the room is already taken
+      if (row.status === "taken") {
+        return res.status(400).json({ error: "Room is already taken!" });
+      }
+
+      // SQL query to update the room status
+      const closeRoom = `
+            UPDATE Rooms
+            SET status = 'taken'
+            WHERE id = ?;
+        `;
+
+      // Run the update query
+      db.run(closeRoom, [roomId], function (err) {
+        if (err) {
+          console.error("Error executing query: " + err.message);
+          return res.status(500).json({ error: "Internal server error!" });
+        }
+
+        // Check if any rows were updated
+        if (this.changes === 0) {
+          return res.status(401).json({ error: "You cannot take this room!" });
+        }
+
+        // If successful, return a success message
+        res.json({ message: "Room successfully taken!", roomId });
+      });
     });
   });
 
