@@ -111,7 +111,7 @@ module.exports = function (db) {
 
                 res.status(201).json({
                   message: "Room and message created successfully",
-                  roomId
+                  roomId,
                 });
               });
             });
@@ -125,12 +125,17 @@ module.exports = function (db) {
     }
   );
 
-  
   router.get("/showAllUsersRooms", basicAuth(db, "user"), (req, res) => {
     const sql = `
-    SELECT Messages.conversation_id, Messages.message, Messages.created_at
-    FROM Messages
-    WHERE Messages.sender_id = ?`;
+    SELECT 
+    Rooms.id AS room_id,
+    Rooms.name AS room_name,
+    Messages.message AS message_content,
+    MessageSender.username AS sender_username
+    FROM Rooms
+    LEFT JOIN Messages ON Rooms.id = Messages.room_id
+    LEFT JOIN Users AS MessageSender ON Messages.sender_id = MessageSender.id
+    WHERE Rooms.user_id = ?;`;
 
     db.all(sql, [req.user.id], (err, rows) => {
       if (err) {
