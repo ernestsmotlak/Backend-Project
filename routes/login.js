@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 module.exports = function (db) {
-  router.post("/login", (req, res) => {
+  router.get("/login", (req, res) => {
     const { username, password } = req.body;
 
     const checkUser =

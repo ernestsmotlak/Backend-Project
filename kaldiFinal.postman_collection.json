@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c31f8a04-b847-4400-ade8-2bc566a9bd2d",
+		"_postman_id": "60f45029-c6df-4c92-a017-ffedb87eb5f5",
 		"name": "kaldiFinal",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "18123138"
@@ -8,8 +8,11 @@
 	"item": [
 		{
 			"name": "Login",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
-				"method": "POST",
+				"method": "GET",
 				"header": [],
 				"body": {
 					"mode": "raw",
