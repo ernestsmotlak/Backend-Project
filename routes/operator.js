@@ -48,12 +48,20 @@ function basicAuth(db, role) {
 
 module.exports = function (db) {
   // Route to show all conversations
-  router.get("/showOpenConversations", basicAuth(db, "operator"), (req, res) => {
+  router.get("/showAllRooms", basicAuth(db, "operator"), (req, res) => {
     const showOpenConversations = `
-        SELECT Messages.conversation_id, Messages.sender_id, Messages.message, Conversations.status
-        FROM Messages
-        JOIN Conversations ON Messages.conversation_id = Conversations.id
-        WHERE Conversations.status = 'open'
+SELECT 
+    Rooms.id AS room_id,
+    Rooms.name AS room_name,
+    GROUP_CONCAT(
+        Messages.message || ' (Sent by: ' || Users.username || ')',
+        ' | '
+    ) AS messages,
+    Rooms.status AS status
+FROM Rooms
+LEFT JOIN Messages ON Rooms.id = Messages.room_id
+LEFT JOIN Users ON Messages.sender_id = Users.id
+GROUP BY Rooms.id, Rooms.name, Rooms.status;
         `;
 
     db.all(showOpenConversations, [], (err, rows) => {
@@ -65,22 +73,26 @@ module.exports = function (db) {
     });
   });
 
-  router.get("/showTakenConversations", basicAuth(db, "operator"), (req, res) => {
-    const showTakenConversations = `
+  router.get(
+    "/showTakenConversations",
+    basicAuth(db, "operator"),
+    (req, res) => {
+      const showTakenConversations = `
         SELECT Messages.conversation_id, Messages.sender_id, Messages.message, Conversations.status
         FROM Messages
         JOIN Conversations ON Messages.conversation_id = Conversations.id
         WHERE Conversations.status = 'taken'
         `;
 
-    db.all(showTakenConversations, [], (err, rows) => {
-      if (err) {
-        console.error("Error executing query: " + err.message);
-        return res.status(500).json({ error: "Internal server error!" });
-      }
-      res.json(rows);
-    });
-  });
+      db.all(showTakenConversations, [], (err, rows) => {
+        if (err) {
+          console.error("Error executing query: " + err.message);
+          return res.status(500).json({ error: "Internal server error!" });
+        }
+        res.json(rows);
+      });
+    }
+  );
 
   router.post("/takeRoom", basicAuth(db, "operator"), (req, res) => {
     // Get conversation_id from the request body
