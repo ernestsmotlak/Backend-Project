@@ -132,8 +132,7 @@ module.exports = function (db) {
     Rooms.name AS room_name,
     GROUP_CONCAT(
        '' || MessageSender.username || ': ' || Messages.message || ' '
-    ) AS messages,
-    Rooms.status AS status
+    ) AS messages
     FROM Rooms
     LEFT JOIN Messages ON Rooms.id = Messages.room_id
     LEFT JOIN Users AS MessageSender ON Messages.sender_id = MessageSender.id
