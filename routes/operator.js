@@ -77,10 +77,20 @@ SELECT
     basicAuth(db, "operator"),
     (req, res) => {
       const showTakenConversations = `
-        SELECT Messages.conversation_id, Messages.sender_id, Messages.message, Conversations.status
-        FROM Messages
-        JOIN Conversations ON Messages.conversation_id = Conversations.id
-        WHERE Conversations.status = 'taken'
+        SELECT 
+        Rooms.id AS room_id,
+        Rooms.name AS room_name,
+        GROUP_CONCAT(
+            Users.username || ': ' || Messages.message,
+            ', '
+        ) AS messages,
+        Rooms.status AS status
+        FROM Rooms
+        LEFT JOIN Messages ON Rooms.id = Messages.room_id
+        LEFT JOIN Users ON Messages.sender_id = Users.id
+        WHERE Rooms.status = 'taken'
+        GROUP BY Rooms.id, Rooms.name, Rooms.status;
+
         `;
 
       db.all(showTakenConversations, [], (err, rows) => {
