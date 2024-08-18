@@ -147,5 +147,43 @@ module.exports = function (db) {
     });
   });
 
+  router.get("/sendMessageToRoom", basicAuth(db, "user"), (req, res) => {
+    const { message, roomId } = req.body;
+    const sql = `
+    INSERT INTO Messages (room_id, sender_id, message)
+    VALUES (?, ?, ?);;`;
+
+    db.all(sql, [roomId, req.user.id, message], (err, rows) => {
+      if (err) {
+        console.error("Error executing query " + err.message);
+        return res.status(500).json({ error: "Internal server error!" });
+      }
+
+      // res.json(rows);
+      res.json("Message sent!");
+    });
+  });
+
+  router.get("/showCertainRoom", basicAuth(db, "user"), (req, res) => {
+    const { roomId } = req.body;
+    const sql = `
+    SELECT 
+	  Messages.room_id, 
+	  Users.username,
+	  Messages.message
+    FROM Messages
+    JOIN Users ON Messages.sender_id = Users.id
+    WHERE Messages.room_id = ?;`;
+
+    db.all(sql, [roomId], (err, rows) => {
+      if (err) {
+        console.error("Error executing query " + err.message);
+        return res.status(500).json({ error: "Internal server error!" });
+      }
+
+      res.json(rows);
+    });
+  });
+
   return router;
 };
