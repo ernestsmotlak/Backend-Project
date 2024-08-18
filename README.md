@@ -1,15 +1,18 @@
-# REST API
+# REST API for User Support
 
 How to run
 
-- `npm install`
-- `nodemon server.js`
+ **Install dependencies**:
+   ```bash
+    npm install
+    nodemon server.js
+   ```
 
-## DATABASE
+## Database
 
 The databse is SqLite, i used DB Browser for SqLite for editing the database.
 
-# Tables:
+### Tables:
 
 - **Users**
   - `id` (Primary Key)
@@ -31,14 +34,12 @@ The databse is SqLite, i used DB Browser for SqLite for editing the database.
   - `created_at`
 
 
-and images can be specified like so:
+## Authentication
 
-![example image](example-image.jpg "An exemplary image")
+The API uses Basic HTTP Authentication. 
+For accessing the endpoints you need to provide username and password.
 
-Inline math equations go in like so: $\omega = d\phi / dt$. Display
-math should get its own line and be put in in double-dollarsigns:
+## Testing
 
-$$I = \int \rho R^{2} dV$$
-
-And note that you can backslash-escape any punctuation characters
-which you wish to be displayed literally, ex.: \`foo\`, \*bar\*, etc.
+Most of the testing was done by using Postman.
+I have also included the _**kaldiFinal.postman_collection.json**_ that should upon being imported into Postman show the requests.
