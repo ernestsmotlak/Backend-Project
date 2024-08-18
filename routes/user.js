@@ -48,88 +48,82 @@ function basicAuth(db, role) {
 
 module.exports = function (db) {
   // Route to create a conversation and insert an initial message
-  router.post("/sendMessage", basicAuth(db, "user"), (req, res) => {
-    const { roomName, message } = req.body;
+  router.post(
+    "/createRoomAndSendMessage",
+    basicAuth(db, "user"),
+    (req, res) => {
+      const { roomName, message } = req.body;
 
-    if (!roomName) {
-      return res.status(400).json({ error: "Please select a room!" });
-    }
-
-    if (message === "") {
-      return res.status(400).json({ error: "Message cannot be empty!" });
-    }
-
-    // Start the transaction
-    db.run("BEGIN TRANSACTION", (err) => {
-      if (err) {
-        console.error("Error starting transaction: " + err.message);
-        return res.status(500).json({ error: "Internal Server Error" });
+      if (!roomName) {
+        return res.status(400).json({ error: "Please select a room!" });
       }
 
-      // Insert a new conversation
-      const insertConversation = db.prepare(`
-        INSERT INTO Conversations (user_id, room_id, status)
-        VALUES (
-          ?,
-          (SELECT id FROM Rooms WHERE name = ?),
-          ?
-        )
-      `);
+      if (message === "") {
+        return res.status(400).json({ error: "Message cannot be empty!" });
+      }
 
-      insertConversation.run(req.user.id, roomName, "open", function (err) {
-        if (err) {
-          console.error("Error inserting conversation: " + err.message);
-          return db.run("ROLLBACK", () => {
-            res.status(500).json({ error: "Internal Server Error" });
-          });
-        }
+      // Start the transaction
+      db.serialize(() => {
+        db.run("BEGIN TRANSACTION", (err) => {
+          if (err) {
+            console.error("Error starting transaction: " + err.message);
+            return res.status(500).json({ error: "Internal Server Error 1" });
+          }
 
-        const conversationId = this.lastID;
+          // Insert a new room with the provided name
+          const insertRoom = db.prepare(`
+            INSERT INTO Rooms (name, user_id, status)
+            VALUES (?, ?, 'open')
+          `);
 
-        // Insert the initial message with provided content
-        const insertMessage = db.prepare(`
-          INSERT INTO Messages (conversation_id, sender_id, message)
-          VALUES (
-            ?,
-            ?,
-            ?
-          )
-        `);
-
-        insertMessage.run(
-          conversationId,
-          req.user.id,
-          message || "",
-          function (err) {
+          insertRoom.run(roomName, req.user.id, function (err) {
             if (err) {
-              console.error("Error inserting message: " + err.message);
+              console.error("Error inserting room: " + err.message);
               return db.run("ROLLBACK", () => {
-                res.status(500).json({ error: "Internal Server Error" });
+                res.status(500).json({ error: "Internal Server Error 2" });
               });
             }
 
-            // Commit the transaction
-            db.run("COMMIT", (err) => {
+            const roomId = this.lastID; // Get the newly inserted room ID
+
+            // Insert the initial message with provided content
+            const insertMessage = db.prepare(`
+              INSERT INTO Messages (room_id, sender_id, message)
+              VALUES (?, ?, ?)
+            `);
+
+            insertMessage.run(roomId, req.user.id, message, function (err) {
               if (err) {
-                console.error("Error committing transaction: " + err.message);
+                console.error("Error inserting message: " + err.message);
                 return db.run("ROLLBACK", () => {
-                  res.status(500).json({ error: "Internal Server Error" });
+                  res.status(500).json({ error: "Internal Server Error 3" });
                 });
               }
 
-              res.status(201).json({
-                message: "Conversation and message created successfully",
+              // Commit the transaction
+              db.run("COMMIT", (err) => {
+                if (err) {
+                  console.error("Error committing transaction: " + err.message);
+                  return db.run("ROLLBACK", () => {
+                    res.status(500).json({ error: "Internal Server Error 4" });
+                  });
+                }
+
+                res.status(201).json({
+                  message: "Room and message created successfully",
+                  roomId
+                });
               });
             });
-          }
-        );
 
-        insertMessage.finalize();
+            insertMessage.finalize();
+          });
+
+          insertRoom.finalize();
+        });
       });
-
-      insertConversation.finalize();
-    });
-  });
+    }
+  );
 
   router.get("/showAllUsersRooms", basicAuth(db, "user"), (req, res) => {
     const sql = `
